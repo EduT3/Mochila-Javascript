@@ -1,6 +1,6 @@
 # MOCHILHA-JAVASCRIPT
 
-MOCHILA DE ITENS USANDO JAVASCRIPT
+Armazenamento de dados no navegador
 
 | :placard: Vitrine.Dev |     |
 | -------------  | --- |
