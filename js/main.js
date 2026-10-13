@@ -1,84 +1,52 @@
 const form = document.getElementById("novoItem");
 const lista = document.getElementById("lista");
-const itens = JSON.parse(localStorage.getItem("itens")) || [];
-
-itens.forEach((elemento) => {
-  criaElemento(elemento);
-});
-
-form.addEventListener("submit", (evento) => {
-  evento.preventDefault();
-
-  const nome = evento.target.elements["nome"];
-  const quantidade = evento.target.elements["quantidade"];
-
-  const existe = itens.find((elemento) => elemento.nome === nome.value);
-
-  const itemAtual = {
-    nome: nome.value,
-    quantidade: quantidade.value,
-  };
-
-  if (existe) {
-    itemAtual.id = existe.id;
-
-    atualizaElemento(itemAtual);
-
-    itens[itens.findIndex(elemento => elemento.id === existe.id)] = itemAtual;
-  } else {
-    itemAtual.id = itens[itens.length -1] ? (itens[itens.length-1]).id +1 : 0;
-
-    criaElemento(itemAtual);
-
-    itens.push(itemAtual);
+const status = document.getElementById("status");
+let itens = [];
+try {
+  const salvos = JSON.parse(localStorage.getItem("itens") || "[]");
+  if (Array.isArray(salvos)) itens = salvos.filter(item => item && typeof item.nome === "string" && item.nome.trim() && Number.isInteger(Number(item.quantidade)) && Number(item.quantidade) > 0).map((item, id) => ({ id, nome: item.nome.trim(), quantidade: Number(item.quantidade) }));
+} catch {
+  status.textContent = "Não foi possível carregar os itens salvos. Você pode começar uma nova lista.";
+}
+function salvar() {
+  try { localStorage.setItem("itens", JSON.stringify(itens)); }
+  catch { status.textContent = "Lista atualizada nesta página, mas o navegador não permitiu salvar. Ela pode se perder ao fechar."; }
+}
+function renderizar() {
+  lista.replaceChildren();
+  for (const item of itens) {
+    const linha = document.createElement("li");
+    linha.className = "item";
+    const quantidade = document.createElement("strong");
+    quantidade.textContent = item.quantidade;
+    const nome = document.createElement("span");
+    nome.textContent = item.nome;
+    const remover = document.createElement("button");
+    remover.type = "button";
+    remover.textContent = "Remover";
+    remover.setAttribute("aria-label", `Remover ${item.nome}`);
+    remover.addEventListener("click", () => {
+      itens = itens.filter(atual => atual.id !== item.id);
+      status.textContent = `${item.nome} removido.`;
+      renderizar(); salvar(); form.elements.nome.focus();
+    });
+    linha.append(quantidade, nome, remover);
+    lista.append(linha);
   }
-
-  localStorage.setItem("itens", JSON.stringify(itens));
-
-  nome.value = "";
-  quantidade.value = "";
+  document.getElementById("lista-vazia").hidden = itens.length > 0;
+}
+form.addEventListener("submit", evento => {
+  evento.preventDefault();
+  const nome = form.elements.nome.value.trim();
+  const quantidade = Number(form.elements.quantidade.value);
+  if (!nome || !Number.isSafeInteger(quantidade) || quantidade < 1) {
+    status.textContent = "Informe um nome e uma quantidade inteira maior que zero.";
+    return;
+  }
+  const existente = itens.find(item => item.nome.toLocaleLowerCase("pt-BR") === nome.toLocaleLowerCase("pt-BR"));
+  if (existente) existente.quantidade = quantidade;
+  else itens.push({ id: Math.max(-1, ...itens.map(item => item.id)) + 1, nome, quantidade });
+  status.textContent = existente ? "Quantidade atualizada." : "Item adicionado à mochila.";
+  renderizar(); salvar(); form.reset(); form.elements.nome.focus();
 });
-
-function criaElemento(item) {
-  const novoItem = document.createElement("li");
-  novoItem.classList.add("item");
-
-  const numeroItem = document.createElement("strong");
-  numeroItem.innerHTML = item.quantidade;
-  numeroItem.dataset.id = item.id;
-  novoItem.appendChild(numeroItem);
-
-  novoItem.innerHTML += item.nome;
-
-  novoItem.appendChild(butaoDeleta(item.id));
-
-  lista.appendChild(novoItem);
-}
-
-function atualizaElemento(item) {
-  document.querySelector("[data-id='" + item.id + "']").innerHTML =
-    item.quantidade;
-}
-
-function butaoDeleta(id) {
-  const elementoBotao = document.createElement("button");
-  elementoBotao.innerText = "X";
-
-  elementoBotao.addEventListener("click", function () {
-    deletaElemento(this.parentNode, id);
-  });
-
-  return elementoBotao;
-}
-
-function deletaElemento(tag, id) {
-  tag.remove();
-
-  itens.splice(
-    itens.findIndex((elemento) => elemento.id === id),
-    1
-  );
-
-  localStorage.setItem("itens", JSON.stringify(itens));
-
-}
+renderizar();

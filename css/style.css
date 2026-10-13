@@ -130,3 +130,16 @@ html {
     font-weight: 400;
 }
 
+
+/* Layout fluido sem alterar a ilustração original da mochila. */
+html { min-height: 100%; height: auto; }
+body { margin: 0; }
+.conteudo { max-width: 1200px; margin: auto; padding: 3rem 1rem; flex-wrap: wrap; }
+.principal { min-width: 0; flex: 1 1 36rem; }
+.conteudo > section { flex: 1 1 20rem; color: white; }
+.item { color: #261727; padding: 1rem; }
+.item span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.item strong { flex-shrink: 0; }
+button { padding: .6rem; cursor: pointer; }
+:focus-visible { outline: 3px solid #ffcc4d; outline-offset: 3px; }
+@media (max-width: 600px) { .principal { flex-direction: column; padding: 3rem 1rem 1rem; align-items: center; } .item { gap: .5rem; font-size: 1rem; } }
